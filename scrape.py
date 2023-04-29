@@ -191,18 +191,15 @@ def process():
     #  "C" key to list:
     #    rank, country, timestamp?, initials, state, investmentid, $-since-jan-27, $-total.
     #    rank, timestamp, country, initials, state, investmentId, $-since-jan27,$-total
-    #  "C"s with "R"
-    #    rank, timestamp, initials, state, investmentId, $-since, $-total, R=?
-    #    rank, timestamp, initials, state, investmentId, $-total
+
     value_dicts = ds0['ValueDicts']
-    # D0 country codes, D1 initials, D2 states, D3 Investment Id
+
     country_codes = value_dicts['D0']
     initials = value_dicts['D1']
     states = value_dicts['D2']
     investment_ids = value_dicts['D3']
 
     parsed = []
-    print(f'There are {len(row_data[0]["DM0"])} rows')
     rnum = 0
     v = {}
     for row in row_data[0]['DM0']:
@@ -240,24 +237,19 @@ def process():
                 record = record[1:]
         if options.verbose > 1:
             print(f'{v}')
-        if isinstance(v['inv'], str):
-            inv_str = v['inv']
-        else:
-            inv_str = investment_ids[v['inv']]
-        if isinstance(v['st'], str):
-            st_str = v['st']
-        else:
-            st_str = states[v['st']]
-        if isinstance(v['inits'], str):
-            init_str = v['inits']
-        else:
-            init_str = initials[v['inits']]
-        if isinstance(v['country'], str):
-            country_str = v['country']
-        else:
-            country_str = country_codes[v['country']]
-        print(f'{v["rank"]}, {init_str}, {st_str}, {country_str}, {inv_str}, {format_time(v["timestamp"])}, ${v["accel"]:,.1f}, ${v["alltime"]:,.2f}{uncertain}')
 
+        inv_str = maybe_lookup(investment_ids, v['inv'])
+        st_str = maybe_lookup(states, v['st'])
+        init_str = maybe_lookup(initials, v['inits'])
+        country_str = maybe_lookup(country_codes, v['country'])
+
+        print(f'{v["rank"]}, {init_str}, {st_str}, {country_str}, {inv_str}, {format_time(v["timestamp"])}, "${v["accel"]:,.1f}", "${v["alltime"]:,.2f}"{uncertain}')
+
+def maybe_lookup(d, k):
+    # if k is a string, that's the answer; otherwise d[k]
+    if isinstance(k, str):
+        return k
+    return d[k]
         
 def format_time(msecs):
     gm = time.gmtime(msecs/1000)
