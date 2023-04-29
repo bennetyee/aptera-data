@@ -271,7 +271,7 @@ def main(argv):
     parser.add_argument('--use-canned-iframe-data', '-C', type=str,
                         default=None,
                         help='filename where canned iframe data is loaded from')
-    parser.add_argument('--request-file', '-r', type=str, default='request.txt',
+    parser.add_argument('--request-file', '-r', type=str, default=None,
                         help='file containing XHR data query')
     parser.add_argument('--reply-log-file', '-w', type=str, default=None,
                         help='file into which the XHR data query reply should be written')
@@ -282,6 +282,8 @@ def main(argv):
                         help='increment the verbosity level by 1')
     global options
     options = parser.parse_args(sys.argv[1:])
+    if options.request_file is None:
+        options.request_file = os.path.join(os.path.dirname(argv[0]), 'request.txt')
     process()
     return 0
 
