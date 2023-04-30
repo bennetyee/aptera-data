@@ -15,6 +15,7 @@ do
 #New investor data has arrived
 #EOF
 		printf 'New investor data has arrived\a\n'
+		mv data.csv data.old  # so i can run diff
 		mv data.new data.csv
 	else
 		echo -n .  # progress
