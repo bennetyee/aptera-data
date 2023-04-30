@@ -10,7 +10,7 @@ do
 	fi
 	if ! cmp -s data.new data.csv
 	then
-		date
+		date -Imin
 #		mail $(whoami) <<EOF
 #New investor data has arrived
 #EOF
