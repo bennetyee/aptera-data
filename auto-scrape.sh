@@ -1,24 +1,29 @@
 #!/bin/bash
 
-sleep_duration=300
+poll_period=300
+retry_sleep=60
 
-while sleep ${sleep_duration}
+sleep=$poll_period
+while sleep ${sleep}
 do
 	if ! ./scrape.py > data.new
 	then
 		printf 'Connection error?\n'
-	fi
-	if ! cmp -s data.new data.csv
-	then
-		date -Imin
-#		mail $(whoami) <<EOF
+		sleep=$retry_sleep
+	else
+		if ! cmp -s data.new data.csv
+		then
+#			mail $(whoami) <<EOF
 #New investor data has arrived
 #EOF
-		printf 'New investor data has arrived\a\n'
-		mv data.csv data.old  # so i can run diff
-		mv data.new data.csv
-	else
-		echo -n .  # progress
-		# rm data.new but leave the turd so we can tell when was the last fetch
+			printf '\nNew investor data has arrived\a\n'
+			date -Imin
+			mv data.csv data.old  # so i can run diff
+			mv data.new data.csv
+		else
+			echo -n .  # progress
+			# rm data.new but leave the turd so we can tell when was the last fetch
+		fi
+		sleep=$poll_period
 	fi
 done
