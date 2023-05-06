@@ -18,8 +18,10 @@ do
 #EOF
 			printf '\nNew investor data has arrived\a\n'
 			date -Imin
-			mv data.csv data.old  # so i can run diff
+			mv data.csv data.old  # so i can run diff -- see show_changed.sh
 			mv data.new data.csv
+			# make a copy available for tom
+			scp -p data.csv bennetyee.org:public_html/aptera-data.csv
 		else
 			echo -n .  # progress
 			# rm data.new but leave the turd so we can tell when was the last fetch
