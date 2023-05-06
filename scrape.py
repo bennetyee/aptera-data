@@ -6,7 +6,6 @@ import sys
 import time
 import argparse
 import base64
-import bs4
 import json
 import requests
 import urllib
@@ -16,10 +15,6 @@ options = None  # argparse.Namespace
 main_url='https://aptera.us/leaderboard/'
 
 url='https://app.powerbi.com/view?r=eyJrIjoiZGZhODZhYmUtZjQ3My00NjViLWI3OWEtYWFkNzJjYWU0MzdiIiwidCI6ImU0ZGU0MGIzLTU3ODYtNDAyMC05YjcxLWNmOTM3NjE5ZTRkNiIsImMiOjZ9'
-
-def fetch_data(url):
-    r = requests.get(url)
-    return bs4.BeautifulSoup(r.text, 'lxml')
 
 def find_js_var_init(varname, text):
     regex = varname + r' *= *\'(.*?)\''
@@ -66,7 +61,7 @@ def fetch_data():
         m = re.search(r'<iframe.*nitro-lazy-src="(.*powerbi.*?)".*</iframe>', main_page.text)
         if m is None:
             sys.stderr.write('iframe source not found\n')
-            return 1
+            sys.exit(1)
         if options.verbose > 0:
             print(len(m.group(1)))
         if m.group(1) != url:
@@ -78,7 +73,7 @@ def fetch_data():
     m = re.search(r'\?r=(.*)', url)
     if m is None:
         sys.stderr.write('iframe r parameter unparseable')
-        return 2
+        sys.exit(2)
 
     query_string = m.group(1)
     query_string = urllib.parse.unquote(query_string)
