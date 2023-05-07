@@ -250,6 +250,16 @@ def format_time(msecs):
     gm = time.gmtime(msecs/1000)
     return time.strftime('%m/%d/%Y %I:%M %p', gm)
 
+def find_request_file(binary_path, fname):
+    dir = os.path.dirname(binary_path)
+    search = ['.', '../lib/aptera-data', '../share/aptera-data']
+    for sub in search:
+        p = os.path.join(dir, sub, fname)
+        if os.path.isfile(p):
+            return p
+    sys.stderr.write(f'Cannot find required data file {fname} relative to {dir}, with search list {search}\n')
+    sys.exit(3)
+
 def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('--check-main-page', '-c', type=bool, default=False,
@@ -270,7 +280,9 @@ def main(argv):
     global options
     options = parser.parse_args(sys.argv[1:])
     if options.request_file is None:
-        options.request_file = os.path.join(os.path.dirname(argv[0]), 'request.txt')
+        # search for data file
+        fname = 'aptera-data-request.txt'
+        options.request_file = find_request_file(argv[0], fname)
     process()
     return 0
 
