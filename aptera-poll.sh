@@ -6,7 +6,7 @@ retry_sleep=60
 sleep=$poll_period
 while sleep ${sleep}
 do
-	if ! ./scrape.py > data.new
+	if ! aptera-data > data.new
 	then
 		printf 'Connection error?\n'
 		sleep=$retry_sleep
