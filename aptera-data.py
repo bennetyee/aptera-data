@@ -72,7 +72,7 @@ def fetch_data():
 
     m = re.search(r'\?r=(.*)', url)
     if m is None:
-        sys.stderr.write('iframe r parameter unparseable')
+        sys.stderr.write('iframe r parameter unparseable\n')
         sys.exit(2)
 
     query_string = m.group(1)
@@ -171,6 +171,9 @@ def process():
     else:
         resp = fetch_data()
 
+    if 'results' not in resp:
+        sys.stderr.write('server XHR response incomplete/malformed?\n')
+        sys.exit(4)
     # This is a complicated JSON object.  Sigh.
     results = resp['results']
     # results is a list of dicts containing 'jobId' and 'result' as keys
