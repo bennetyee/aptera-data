@@ -17,8 +17,9 @@ do
 #New investor data has arrived
 #EOF
 			printf '\nNew investor data has arrived\a\n'
-			date -Imin
-			mv data.csv data.old  # so i can run diff -- see show_changed.sh
+			date -Imin --reference data.new
+		       	# so we can run diff -- see show_changed.sh
+			mv data.csv data.old
 			mv data.new data.csv
 			# make a copy available for tom
 			scp -p data.csv bennetyee.org:public_html/aptera-data.csv
