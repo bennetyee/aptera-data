@@ -3,12 +3,12 @@
 poll_period=300
 retry_sleep=60
 
-sleep=$poll_period
+sleep=1  # fast check on first time through
 while sleep ${sleep}
 do
 	if ! aptera-data > data.new
 	then
-		printf 'Connection error?\n'
+		printf 'Connection error occured at %s.\n' "$(date -Imin)"
 		sleep=$retry_sleep
 	else
 		if ! cmp -s data.new data.csv
