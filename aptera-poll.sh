@@ -2,6 +2,9 @@
 
 poll_period=300
 retry_sleep=60
+update_remote=1
+keep_hist=1
+history_dir=${1:-history}
 
 sleep=1  # fast check on first time through
 while sleep ${sleep}
@@ -11,6 +14,7 @@ do
 		printf 'Connection error occured at %s.\n' "$(date -Imin)"
 		sleep=$retry_sleep
 	else
+		now="$(date -Imin)"
 		if ! cmp -s data.new data.csv
 		then
 #			mail $(whoami) <<EOF
@@ -18,11 +22,16 @@ do
 #EOF
 			printf '\nNew investor data has arrived\a\n'
 			date -Imin --reference data.new
+			if [ $keep_hist -eq 1 ]
+			then
+				mkdir -p $history_dir
+				cp -p data.csv $history_dir/data.$now.csv
+			fi
 		       	# so we can run diff -- see show_changed.sh
 			mv data.csv data.old
 			mv data.new data.csv
 			# make a copy available for tom
-			scp -p data.csv bennetyee.org:public_html/aptera-data.csv
+			[ $update_remote -eq 1 ] && scp -p data.csv bennetyee.org:public_html/aptera-data.csv
 		else
 			echo -n .  # progress
 			# rm data.new but leave the turd so we can tell when was the last fetch
