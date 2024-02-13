@@ -281,7 +281,7 @@ def main(argv):
                         default=0,
                         help='increment the verbosity level by 1')
     global options
-    options = parser.parse_args(sys.argv[1:])
+    options = parser.parse_args(argv[1:])
     if options.request_file is None:
         # search for data file
         fname = 'aptera-data-request.txt'

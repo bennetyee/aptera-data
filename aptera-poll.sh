@@ -9,7 +9,7 @@ history_dir=${1:-history}
 sleep=1  # fast check on first time through
 while sleep ${sleep}
 do
-	if ! aptera-data > data.new
+	if ! aptera_data > data.new
 	then
 		printf 'Connection error occured at %s.\n' "$(date -Imin)"
 		sleep=$retry_sleep
