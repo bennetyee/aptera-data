@@ -24,7 +24,7 @@ do
 			if [ $keep_hist -eq 1 ]
 			then
 				mkdir -p $history_dir
-				cp -p data.new.csv $history_dir/data.$now.csv
+				cp -p data.new $history_dir/data.$now.csv
 			fi
 		       	# so we can run diff -- see show_changed.sh
 			mv data.csv data.old
