@@ -14,18 +14,17 @@ do
 		printf 'Connection error occured at %s.\n' "$(date -Imin)"
 		sleep=$retry_sleep
 	else
-		now="$(date -Imin)"
+		now="$(date -Imin --reference data.new)"
 		if ! cmp -s data.new data.csv
 		then
 #			mail $(whoami) <<EOF
 #New investor data has arrived
 #EOF
-			printf '\nNew investor data has arrived\a\n'
-			date -Imin --reference data.new
+			printf '\nNew investor data has arrived\a\n%s\n' "$now"
 			if [ $keep_hist -eq 1 ]
 			then
 				mkdir -p $history_dir
-				cp -p data.csv $history_dir/data.$now.csv
+				cp -p data.new.csv $history_dir/data.$now.csv
 			fi
 		       	# so we can run diff -- see show_changed.sh
 			mv data.csv data.old
