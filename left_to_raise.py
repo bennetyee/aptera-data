@@ -18,7 +18,7 @@ def left_to_raise(url):
 
 def main(argv):
     # no argument parser for now
-    print(f'{left_to_raise(url)} left to raise')
+    print(f'${left_to_raise(url):,.2f} left to raise')
     return 0
 
 if __name__ == '__main__':
