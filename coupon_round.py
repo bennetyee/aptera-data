@@ -50,9 +50,9 @@ def main(argv):
     parser.add_argument('--dollar', '-d', type=bool, default=False,
                         action=argparse.BooleanOptionalAction,
                         help='print total dollar amount committed')
-    parser.add_argument('--priority', type=bool, default=True,
+    parser.add_argument('--priority-only', type=bool, default=True,
                         action=argparse.BooleanOptionalAction,
-                        help='count number of commitments that qualify for priority delivery')
+                        help='only count number of commitments that qualify for priority delivery')
     parser.add_argument('--verbose', '-v', action='count',
                         default=0,
                         help='increment the verbosity level by 1')
@@ -61,7 +61,7 @@ def main(argv):
         ts = f'{datetime.datetime.now().isoformat()} '
     else:
         ts = ''
-    if options.priority:
+    if options.priority_only:
         sums = total_committed_amount_and_count(slot_queries)
     else:
         if options.remaining:
