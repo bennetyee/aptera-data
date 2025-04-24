@@ -9,7 +9,12 @@ import sys
 issuance_url1 = 'https://api.issuance.com/api/investments/summary/?slug=aptera-regd&shares_amount__gte=5000&processed_at__date__gte=2025-04-10'
 issuance_url2 = 'https://api.issuance.com/api/investments/summary/?slug=aptera-rega&shares_amount__gte=5000&processed_at__date__gte=2025-04-10'
 
-queries = [issuance_url1, issuance_url2]
+slot_queries = [issuance_url1, issuance_url2]
+
+issuance_url3 = 'https://api.issuance.com/api/investments/summary/?slug=aptera-regd&processed_at__date__gte=2025-04-10'
+issuance_url4 = 'https://api.issuance.com/api/investments/summary/?slug=aptera-rega&processed_at__date__gte=2025-04-10'
+
+all_queries = [issuance_url3, issuance_url4]
 
 priority_slots_available = 1_000
 
@@ -24,8 +29,8 @@ def fetch_amount_and_count(url):
     jdata = json.loads(data.content)
     return (jdata['total_amount_committed']['amount'], jdata['total_amount_committed']['count'])
 
-def total_committed_amount_and_count():
-    d = [fetch_amount_and_count(u) for u in queries]
+def total_committed_amount_and_count(urls):
+    d = [fetch_amount_and_count(u) for u in urls]
     amt = [e[0] for e in d]
     cnt = [e[1] for e in d]
     return (sum(amt), sum(cnt))
@@ -45,6 +50,9 @@ def main(argv):
     parser.add_argument('--dollar', '-d', type=bool, default=False,
                         action=argparse.BooleanOptionalAction,
                         help='print total dollar amount committed')
+    parser.add_argument('--priority', type=bool, default=True,
+                        action=argparse.BooleanOptionalAction,
+                        help='count number of commitments that qualify for priority delivery')
     parser.add_argument('--verbose', '-v', action='count',
                         default=0,
                         help='increment the verbosity level by 1')
@@ -53,7 +61,13 @@ def main(argv):
         ts = f'{datetime.datetime.now().isoformat()} '
     else:
         ts = ''
-    sums = total_committed_amount_and_count()
+    if options.priority:
+        sums = total_committed_amount_and_count(slot_queries)
+    else:
+        if options.remaining:
+            print('Counting non-priority commitments and printing slots remaining are incompatible options', file=sys.stderr)
+            return 1
+        sums = total_committed_amount_and_count(all_queries)
     committed = sums[1]
     if options.remaining:
         committed = options.total_slots - committed
