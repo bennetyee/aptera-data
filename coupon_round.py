@@ -15,17 +15,20 @@ priority_slots_available = 1_000
 
 options = None
 
-def fetch_count(url):
+def fetch_amount_and_count(url):
     data = requests.get(url)
     if options.verbose:
         print(f'fetched from {url}: {data.ok} {data.content}')
     if not data.ok:
         return -1
     jdata = json.loads(data.content)
-    return jdata['total_amount_committed']['count']
+    return (jdata['total_amount_committed']['amount'], jdata['total_amount_committed']['count'])
 
-def total_committed():
-    return sum(fetch_count(u) for u in queries)
+def total_committed_amount_and_count():
+    d = [fetch_amount_and_count(u) for u in queries]
+    amt = [e[0] for e in d]
+    cnt = [e[1] for e in d]
+    return (sum(amt), sum(cnt))
 
 def main(argv):
     global options
@@ -39,18 +42,26 @@ def main(argv):
     parser.add_argument('--total-slots', type=int,
                         default=priority_slots_available,
                         help='change the number of priority slots available')
+    parser.add_argument('--dollar', '-d', type=bool, default=False,
+                        action=argparse.BooleanOptionalAction,
+                        help='print total dollar amount committed')
     parser.add_argument('--verbose', '-v', action='count',
                         default=0,
                         help='increment the verbosity level by 1')
     options = parser.parse_args(argv[1:])
     if options.timestamp:
-        ts = datetime.datetime.now().isoformat() + ' '
+        ts = f'{datetime.datetime.now().isoformat()} '
     else:
         ts = ''
-    value = total_committed()
+    sums = total_committed_amount_and_count()
+    committed = sums[1]
     if options.remaining:
-        value = options.total_slots - value
-    print(f'{ts}{value:d}')
+        committed = options.total_slots - committed
+    if options.dollar:
+        d = f'${sums[0]:,.2f} '
+    else:
+        d = ''
+    print(f'{ts}{d}{committed:d}')
     return 0
 
 if __name__ == '__main__':
