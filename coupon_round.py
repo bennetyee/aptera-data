@@ -6,31 +6,36 @@ import json
 import requests
 import sys
 
-issuance_url1 = 'https://api.issuance.com/api/investments/summary/?slug=aptera-regd&shares_amount__gte=5000&processed_at__date__gte=2025-04-10'
-issuance_url2 = 'https://api.issuance.com/api/investments/summary/?slug=aptera-rega&shares_amount__gte=5000&processed_at__date__gte=2025-04-10'
+options = None
 
-slot_queries = [issuance_url1, issuance_url2]
-
-issuance_url3 = 'https://api.issuance.com/api/investments/summary/?slug=aptera-regd&processed_at__date__gte=2025-04-10'
-issuance_url4 = 'https://api.issuance.com/api/investments/summary/?slug=aptera-rega&processed_at__date__gte=2025-04-10'
-
-all_queries = [issuance_url3, issuance_url4]
+issuance_url = 'https://api.issuance.com/api/investments/summary/'
+issuance_params = {
+    'processed_at__date__gte': '2025-04-10',
+}
 
 priority_slots_available = 1_000
 
-options = None
+def make_params(priority_only):
+    plist = []
+    for reg in ['aptera-rega', 'aptera-regd']:
+        params = issuance_params.copy()
+        params['slug'] = reg
+        if priority_only:
+            params['shares_amount__gte'] = '5000'
+        plist.append(params)
+    return plist
 
-def fetch_amount_and_count(url):
-    data = requests.get(url)
+def fetch_amount_and_count(url, params):
+    data = requests.get(url, params=params)
     if options.verbose:
-        print(f'fetched from {url}: {data.ok} {data.content}')
+        print(f'fetched from {url}, {params}: {data.ok} {data.content}')
     if not data.ok:
         return -1
     jdata = json.loads(data.content)
     return (jdata['total_amount_committed']['amount'], jdata['total_amount_committed']['count'])
 
-def total_committed_amount_and_count(urls):
-    d = [fetch_amount_and_count(u) for u in urls]
+def total_committed_amount_and_count(url, params):
+    d = [fetch_amount_and_count(url, p) for p in params]
     amt = [e[0] for e in d]
     cnt = [e[1] for e in d]
     return (sum(amt), sum(cnt))
@@ -61,13 +66,12 @@ def main(argv):
         ts = f'{datetime.datetime.now().isoformat()} '
     else:
         ts = ''
-    if options.priority_only:
-        sums = total_committed_amount_and_count(slot_queries)
-    else:
-        if options.remaining:
-            print('Counting non-priority commitments and printing slots remaining are incompatible options', file=sys.stderr)
-            return 1
-        sums = total_committed_amount_and_count(all_queries)
+
+    if not options.priority_only and  options.remaining:
+        print('Counting non-priority commitments and printing slots remaining are incompatible options', file=sys.stderr)
+        return 1
+
+    sums = total_committed_amount_and_count(issuance_url, make_params(options.priority_only))
     committed = sums[1]
     if options.remaining:
         committed = options.total_slots - committed
