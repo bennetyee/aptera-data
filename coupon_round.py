@@ -36,8 +36,7 @@ def fetch_amount_and_count(url, params):
 
 def total_committed_amount_and_count(url, params):
     d = [fetch_amount_and_count(url, p) for p in params]
-    amt = [e[0] for e in d]
-    cnt = [e[1] for e in d]
+    amt, cnt = map(list, zip(*d))
     return (sum(amt), sum(cnt))
 
 def main(argv):
