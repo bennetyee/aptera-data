@@ -6,7 +6,9 @@ import json
 import requests
 import sys
 
-options = None
+from typing import Any, Dict, Tuple
+
+options: Any = None  # argparse.Namespace
 
 issuance_url = 'https://api.issuance.com/api/investments/summary/'
 issuance_params = {
@@ -15,7 +17,7 @@ issuance_params = {
 
 priority_slots_available = 1_000
 
-def make_params(priority_only):
+def make_params(priority_only: bool) -> list[Dict[str, str]]:
     plist = []
     for reg in ['aptera-rega', 'aptera-regd']:
         params = issuance_params.copy()
@@ -25,21 +27,21 @@ def make_params(priority_only):
         plist.append(params)
     return plist
 
-def fetch_amount_and_count(url, params):
+def fetch_amount_and_count(url: str, params: Dict[str, str]) -> Tuple[float, float]:
     data = requests.get(url, params=params)
     if options.verbose:
-        print(f'fetched from {url}, {params}: {data.ok} {data.content}')
+        print(f'fetched from {url}, {params}: {data.ok} {data.content!r}')
     if not data.ok:
-        return -1
+        raise IOError
     jdata = json.loads(data.content)
     return (jdata['total_amount_committed']['amount'], jdata['total_amount_committed']['count'])
 
-def total_committed_amount_and_count(url, params):
+def total_committed_amount_and_count(url, params) -> Tuple[float, int]:
     d = [fetch_amount_and_count(url, p) for p in params]
     amt, cnt = map(list, zip(*d))
     return (sum(amt), sum(cnt))
 
-def main(argv):
+def main(argv: list[str]) -> int:
     global options
     parser = argparse.ArgumentParser()
     parser.add_argument('--timestamp', '-t', type=bool, default=True,
@@ -70,7 +72,11 @@ def main(argv):
         print('Counting non-priority commitments and printing slots remaining are incompatible options', file=sys.stderr)
         return 1
 
-    sums = total_committed_amount_and_count(issuance_url, make_params(options.priority_only))
+    try:
+        sums = total_committed_amount_and_count(issuance_url, make_params(options.priority_only))
+    except IOError:
+        print('Error while fetching data', file=sys.stderr)
+        return 1
     committed = sums[1]
     if options.remaining:
         committed = options.total_slots - committed
