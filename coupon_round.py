@@ -59,6 +59,9 @@ def main(argv: list[str]) -> int:
     parser.add_argument('--priority-only', type=bool, default=True,
                         action=argparse.BooleanOptionalAction,
                         help='only count number of commitments that qualify for priority delivery')
+    parser.add_argument('--average-investment', type=bool, default=True,
+                        action=argparse.BooleanOptionalAction,
+                        help='print average investment amount for current investment category selected')
     parser.add_argument('--verbose', '-v', action='count',
                         default=0,
                         help='increment the verbosity level by 1')
@@ -68,7 +71,7 @@ def main(argv: list[str]) -> int:
     else:
         ts = ''
 
-    if not options.priority_only and  options.remaining:
+    if not options.priority_only and options.remaining:
         print('Counting non-priority commitments and printing slots remaining are incompatible options', file=sys.stderr)
         return 1
 
@@ -77,14 +80,18 @@ def main(argv: list[str]) -> int:
     except IOError:
         print('Error while fetching data', file=sys.stderr)
         return 1
-    committed = sums[1]
+    slots = sums[1]
     if options.remaining:
-        committed = options.total_slots - committed
+        slots = options.total_slots - slots
     if options.dollar:
         d = f'${sums[0]:,.2f} '
     else:
         d = ''
-    print(f'{ts}{d}{committed:d}')
+    if options.average_investment:
+        avg = f' average: ${sums[0]/sums[1]:,.2f}'
+    else:
+        avg = ''
+    print(f'{ts}{d}slots: {slots:d}{avg}')
     return 0
 
 if __name__ == '__main__':
