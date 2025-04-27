@@ -44,6 +44,11 @@ def total_committed_amount_and_count(url, params) -> Tuple[float, int]:
 def main(argv: list[str]) -> int:
     global options
     parser = argparse.ArgumentParser()
+    parser.add_argument('--csv', type=bool, default=False,
+                        action=argparse.BooleanOptionalAction,
+                        help='output CSV separated values instead of human-readable data')
+    # timestamp string and numbers, and CSV quoting is needed only for
+    # amounts with thousand separators (e.g., dollar figures)
     parser.add_argument('--timestamp', '-t', type=bool, default=True,
                         action=argparse.BooleanOptionalAction,
                         help='output a timestamp with the committed count')
@@ -59,21 +64,22 @@ def main(argv: list[str]) -> int:
     parser.add_argument('--priority-only', type=bool, default=True,
                         action=argparse.BooleanOptionalAction,
                         help='only count number of commitments that qualify for priority delivery')
-    parser.add_argument('--average-investment', type=bool, default=True,
+    parser.add_argument('--average-investment', type=bool, default=False,
                         action=argparse.BooleanOptionalAction,
                         help='print average investment amount for current investment category selected')
     parser.add_argument('--verbose', '-v', action='count',
                         default=0,
                         help='increment the verbosity level by 1')
     options = parser.parse_args(argv[1:])
-    if options.timestamp:
-        ts = f'{datetime.datetime.now().isoformat()} '
-    else:
-        ts = ''
 
     if not options.priority_only and options.remaining:
         print('Counting non-priority commitments and printing slots remaining are incompatible options', file=sys.stderr)
         return 1
+
+    if options.timestamp:
+        ts = f'{datetime.datetime.now().isoformat()}'
+    else:
+        ts = ''
 
     try:
         sums = total_committed_amount_and_count(issuance_url, make_params(options.priority_only))
@@ -81,17 +87,44 @@ def main(argv: list[str]) -> int:
         print('Error while fetching data', file=sys.stderr)
         return 1
     slots = sums[1]
+
     if options.remaining:
         slots = options.total_slots - slots
-    if options.dollar:
-        d = f'${sums[0]:,.2f} '
-    else:
-        d = ''
-    if options.average_investment:
-        avg = f' average: ${sums[0]/sums[1]:,.2f}'
-    else:
-        avg = ''
-    print(f'{ts}{d}slots: {slots:d}{avg}')
+
+    output_control = [
+        [ options.timestamp,
+          '',
+          lambda : f'{datetime.datetime.now().isoformat()}' ],
+        [ options.dollar,
+          'dollar total: ',
+          lambda: f'${sums[0]:,.2f}' ],
+        [ True,
+          'slots: ',
+          lambda: f'{slots:d}' ],
+        [ options.average_investment,
+          'average: ',
+          lambda: f'${sums[0]/sums[1]:,.2f}' ],
+    ]
+
+    def comma_quote(v):
+        if ',' in v:
+            return f'"{v}"'
+        else:
+            return v
+
+    sep = ''
+    for (p, l, vf) in output_control:
+        if p:
+            if options.csv:
+                sys.stdout.write(sep)
+                sys.stdout.write(comma_quote(vf()))
+                sep = ', '
+            else:
+                sys.stdout.write(sep)
+                sys.stdout.write(l)
+                sys.stdout.write(vf())
+                sep = ', '
+    sys.stdout.write('\n')
     return 0
 
 if __name__ == '__main__':
