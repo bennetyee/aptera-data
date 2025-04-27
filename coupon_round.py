@@ -106,7 +106,7 @@ def main(argv: list[str]) -> int:
           lambda: f'${sums[0]/sums[1]:,.2f}' ],
     ]
 
-    def comma_quote(v):
+    def comma_quote(v: str) -> str:
         if ',' in v:
             return f'"{v}"'
         else:
