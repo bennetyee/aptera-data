@@ -119,7 +119,8 @@ def main(argv: list[str]) -> int:
 
     def sepgen_human() -> Generator[str, None, None]:
         yield ''
-        yield ' '
+        if options.timestamp:
+            yield ' '
         while True:
             yield ', '
 
