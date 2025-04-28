@@ -6,7 +6,7 @@ import json
 import requests
 import sys
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Generator, Tuple
 
 options: Any = None  # argparse.Namespace
 
@@ -112,12 +112,12 @@ def main(argv: list[str]) -> int:
         else:
             return v
 
-    def sepgen_csv():
+    def sepgen_csv() -> Generator[str, None, None]:
         yield ''
         while True:
             yield ', '
 
-    def sepgen_human():
+    def sepgen_human() -> Generator[str, None, None]:
         yield ''
         yield ' '
         while True:
