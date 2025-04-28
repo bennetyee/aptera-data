@@ -112,18 +112,32 @@ def main(argv: list[str]) -> int:
         else:
             return v
 
-    sep = ''
+    def sepgen_csv():
+        yield ''
+        while True:
+            yield ', '
+
+    def sepgen_human():
+        yield ''
+        yield ' '
+        while True:
+            yield ', '
+
+    if options.csv:
+        sep = sepgen_csv()
+    else:
+        sep = sepgen_human()
+
     for (p, l, vf) in output_control:
         if p:
             if options.csv:
-                sys.stdout.write(sep)
+                sys.stdout.write(next(sep))
                 sys.stdout.write(comma_quote(vf()))
-                sep = ', '
             else:
-                sys.stdout.write(sep)
+                sys.stdout.write(next(sep))
                 sys.stdout.write(l)
                 sys.stdout.write(vf())
-                sep = ', '
+
     sys.stdout.write('\n')
     return 0
 
