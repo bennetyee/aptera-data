@@ -8,38 +8,11 @@ import sys
 
 from typing import Any, Dict, Generator, Tuple
 
+import issuance
+
 options: Any = None  # argparse.Namespace
 
-issuance_url = 'https://api.issuance.com/api/investments/summary/'
-issuance_params = {
-    'processed_at__date__gte': '2025-04-10',
-}
-
 priority_slots_available = 1_000
-
-def make_params(priority_only: bool) -> list[Dict[str, str]]:
-    plist = []
-    for reg in ['aptera-rega', 'aptera-regd']:
-        params = issuance_params.copy()
-        params['slug'] = reg
-        if priority_only:
-            params['shares_amount__gte'] = '5000'
-        plist.append(params)
-    return plist
-
-def fetch_amount_and_count(url: str, params: Dict[str, str]) -> Tuple[float, float]:
-    data = requests.get(url, params=params)
-    if options.verbose:
-        print(f'fetched from {url}, {params}: {data.ok} {data.content!r}')
-    if not data.ok:
-        raise IOError
-    jdata = json.loads(data.content)
-    return (jdata['total_amount_committed']['amount'], jdata['total_amount_committed']['count'])
-
-def total_committed_amount_and_count(url, params) -> Tuple[float, int]:
-    d = [fetch_amount_and_count(url, p) for p in params]
-    amt, cnt = map(list, zip(*d))
-    return (sum(amt), sum(cnt))
 
 def main(argv: list[str]) -> int:
     global options
@@ -72,6 +45,8 @@ def main(argv: list[str]) -> int:
                         help='increment the verbosity level by 1')
     options = parser.parse_args(argv[1:])
 
+    issuance.verbose = options.verbose
+
     if not options.priority_only and options.remaining:
         print('Counting non-priority commitments and printing slots remaining are incompatible options', file=sys.stderr)
         return 1
@@ -82,7 +57,11 @@ def main(argv: list[str]) -> int:
         ts = ''
 
     try:
-        sums = total_committed_amount_and_count(issuance_url, make_params(options.priority_only))
+        if options.priority_only:
+            investment_threshold = 5000 * 100
+        else:
+            investment_threshold = None
+        sums = issuance.total_committed_amount_and_count_at_threshold(investment_threshold)
     except IOError:
         print('Error while fetching data', file=sys.stderr)
         return 1
@@ -144,4 +123,3 @@ def main(argv: list[str]) -> int:
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-
