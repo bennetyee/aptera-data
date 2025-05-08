@@ -8,6 +8,7 @@ import time
 
 from typing import Any, Dict, Generator, Tuple
 
+import cache
 import investment_data
 
 verbose = 0  # verbosity level
@@ -56,12 +57,18 @@ def total_committed_amount_and_count_at_threshold(threshold: int | None):
     return total_committed_amount_and_count(issuance_url, make_params(threshold))
 
 class IssuanceInvestmentData(investment_data.InvestmentData):
-    def __init__(self, slug):
+    def __init__(self, slug: str):
         self._day_zero = datetime.date.fromisoformat(priority_program_start_date_iso)
         self._one_day = datetime.timedelta(days=1)
         self._slug = slug
+        self._cache: cache.FuncCache | None = None
 
-    def filter_and_summarize(self, threshold: int | None, date: int | None) -> Tuple[int, int]:
+    def __call__(self, threshold: int | None, date: int | None) -> Tuple[int, int]:
+        if self._cache is not None:
+            return self._cache(threshold, date)
+        return self.real_work(threshold, date)
+
+    def real_work(self, threshold: int | None, date: int | None) -> Tuple[int, int]:
         params: Dict[str, str] = dict()
 
         params['slug'] = self._slug
@@ -87,3 +94,25 @@ class IssuanceInvestmentData(investment_data.InvestmentData):
         amount += int(100 * a + 0.5)
         count += int(c)
         return (amount, count)
+
+    def enable_cache(self):
+        self._cache = cache.FuncCache(self.real_work)
+
+    def flush_cache(self):
+        if self._cache is not None:
+            self._cache.set_cache(dict())
+
+    def cache(self) -> cache.FuncCache | None:
+        return self._cache
+
+    def set_cache(self, c: Dict[Any, Any]) -> None:
+        # throws if self._cache is None
+        if self._cache is None:
+            raise RuntimeError('caching not enabled')
+        self._cache.set_cache(c)
+
+    def set_progress_period(self, p: int) -> None:
+        # throws if self._cache is None
+        if self._cache is None:
+            raise RuntimeError('caching not enabled')
+        self._cache.set_show_progress_period(p)

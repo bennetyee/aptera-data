@@ -43,20 +43,22 @@ def main(argv: list[str]) -> int:
     for slug in ['aptera-rega', 'aptera-regd']:
         data_src = issuance.IssuanceInvestmentData(slug)
 
-        qf = data_src.filter_and_summarize
+        qf = data_src
         if options.cache:
-            qc = cache.FuncCache(qf, options.show_cache_progress)
+            qf.enable_cache()
+            qf.set_progress_period(options.show_cache_progress)
 
             if options.load_cache != '':
                 cache_file = f'{options.load_cache}-{slug}'
                 if os.path.isfile(cache_file):
                     with open(cache_file) as istr:
-                        qc.set_cache(eval(istr.read()))  # potentially unsafe!
+                        qf.set_cache(eval(istr.read()))  # potentially unsafe!
                     if options.verbose:
                         sys.stderr.write(f'Cache {cache_file} loaded.\n')
                 else:
                     sys.stderr.write(f'Error: cache file {cache_file} does not exist.\n')
-            qf = qc
+                    # we don't quit because we may have a cache file for one
+                    # slug but not the other
     
         extractor = extract_investments.ExtractInvestment(
             qf,
@@ -68,7 +70,7 @@ def main(argv: list[str]) -> int:
         if options.save_cache != '':
             cache_file = f'{options.save_cache}-{slug}'
             with open(cache_file, 'w') as ostr:
-                ostr.write(repr(qc.cache()))
+                ostr.write(repr(qf.cache()))
             if options.verbose:
                 sys.stderr.write(f'Cache {cache_file} written.\n')
     return 0

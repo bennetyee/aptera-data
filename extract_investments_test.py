@@ -27,7 +27,7 @@ class TestExtraction(unittest.TestCase):
         si = synthetic_investments.SyntheticInvestmentData(
             num_entries, num_days, min_inv, max_inv, rng.randrange)
         extractor = extract_investments.ExtractInvestment(
-            si.filter_and_summarize, num_days, min_inv, max_inv)
+            si, num_days, min_inv, max_inv)
 
         investments = extractor.extract_investments()
         daily: Dict[int, int] = dict()
@@ -56,7 +56,7 @@ class TestExtraction(unittest.TestCase):
         si = synthetic_investments.SyntheticInvestmentData(
             num_entries, num_days, min_inv, max_inv, rng.randrange)
         extractor = extract_investments.ExtractInvestment(
-            si.filter_and_summarize, num_days, min_inv, max_inv)
+            si, num_days, min_inv, max_inv)
 
         investments = extractor.extract_investments()
         daily: Dict[int, int] = dict()

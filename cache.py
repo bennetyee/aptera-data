@@ -11,14 +11,17 @@ from typing import Any, Callable, Dict
 # usage (including saves and reloads) of a FuncCache object.
 
 class FuncCache:
-    def __init__(self, f: Callable[..., Any], progress: int):
+    def __init__(self, f: Callable[..., Any]):
         self._f = f
         self._cache: Dict[Any, Any] = dict()
-        self._progress = progress
-        self._hits = 0
-        self._misses = 0
+        self._progress: int = 0
+        self._hits: int = 0
+        self._misses: int = 0
 
-    def __call__(self, *args):
+    def set_show_progress_period(self, p: int) -> None:
+        self._progress = p
+
+    def __call__(self, *args: Any) -> Any:
         if args in self._cache:
             self._hits += 1
             if self._progress > 0 and self._hits % self._progress == 0:
@@ -33,8 +36,8 @@ class FuncCache:
         self._cache[args] = y
         return y
 
-    def cache(self):
+    def cache(self) -> Dict[Any, Any]:
         return self._cache
 
-    def set_cache(self, cache):
+    def set_cache(self, cache: Dict[Any, Any]) -> None:
         self._cache = cache

@@ -2,8 +2,9 @@
 
 import functools
 import random
-from typing import Any, Callable, Tuple, Union
+from typing import Any, Callable, Dict, Tuple, Union
 
+import cache
 import investment_data
 
 class SyntheticInvestmentData(investment_data.InvestmentData):
@@ -18,7 +19,7 @@ class SyntheticInvestmentData(investment_data.InvestmentData):
             for _ in range(num_entries)]
         self._num_queries = 0
 
-    def filter_and_summarize(self, threshold: int | None, date: int | None) -> Tuple[int, int]:
+    def __call__(self, threshold: int | None, date: int | None) -> Tuple[int, int]:
         self._num_queries += 1
         d = self._investments
         if threshold is not None:
@@ -28,6 +29,21 @@ class SyntheticInvestmentData(investment_data.InvestmentData):
 
         dl = [t[1] for t in d]
         return (sum(dl), len(dl))
+
+    def flush_cache(self):
+        return  # no-op
+
+    def cache(self) -> cache.FuncCache | None:
+        return None
+
+    def set_cache(self, c: Dict[Any, Any]) -> None:
+        return
+
+    def enable_cache(self) -> None:
+        return
+
+    def set_progress_period(self, p: int) -> None:
+        return
 
     def reset_num_queries(self) -> None:
         self._num_queries = 0
