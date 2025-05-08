@@ -88,7 +88,6 @@ class ExtractInvestment:
                         sys.stderr.write(f'qf({value+1},{day}) = {qf(value+1,day)}\n')
                         sys.stderr.write(f'qf({value},{day+1}) = {qf(value,day+1)}\n')
                         sys.stderr.write(f'qf({value+1},{day+1}) = {qf(value+1,day+1)}\n')
-                        qf.flush_cache()
                         break
 
                     new_count = func(value+1)
@@ -121,6 +120,8 @@ class ExtractInvestment:
                 # investment
                 day_column_done = count == 0
                 if not day_column_done:
+                    sys.stderr.write('sanity check violation. likely new data incorporated.\n')
+                    qf.flush_cache()
                     self.compute_daily_data()
             # redo column?
         return investments
