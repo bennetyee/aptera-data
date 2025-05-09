@@ -1,15 +1,16 @@
 #!/usr/bin/python3
 
 import argparse
+import json
 import os
 import sys
-from typing import Any
+from typing import Any, Dict
 
 import cache
 import extract_investments
 import issuance
 
-options: Any = None | argparse.Namespace
+options: None | argparse.Namespace = None
 
 def main(argv: list[str]) -> int:
     global options
@@ -26,6 +27,9 @@ def main(argv: list[str]) -> int:
                         help='pre-load query cache from this file')
     parser.add_argument('--show-cache-progress', type=int, default=0,
                         help='print indicator for every this many cache hits (.) and misses (,) (0 to disable)')
+    parser.add_argument('--output-format', type=str, choices=['json', 'old'],
+                        default='old',
+                        help='output style')
 
     options = parser.parse_args(argv[1:])
 
@@ -39,6 +43,8 @@ def main(argv: list[str]) -> int:
     # their verbosity, if they sign up for it.
 
     today = issuance.today_day_number()
+
+    investments_json: Dict[str, Any] = dict()
 
     for slug in ['aptera-rega', 'aptera-regd']:
         data_src = issuance.IssuanceInvestmentData(slug)
@@ -66,13 +72,19 @@ def main(argv: list[str]) -> int:
             0, 10_000_000 * 100)
 
         investments = extractor.extract_investments()
-        sys.stdout.write(f'investments[\'{slug}\'] = {investments}\n')
+        if options.output_format == 'json':
+            investments_json[slug] = investments
+        else:
+            sys.stdout.write(f'investments[\'{slug}\'] = {investments}\n')
         if options.save_cache != '':
             cache_file = f'{options.save_cache}-{slug}'
             with open(cache_file, 'w') as ostr:
                 ostr.write(repr(qf.cache()))
             if options.verbose:
                 sys.stderr.write(f'Cache {cache_file} written.\n')
+    if options.output_format == 'json':
+        sys.stdout.write(json.dumps(investments_json))
+    sys.stdout.flush()
     return 0
 
 if __name__ == '__main__':
