@@ -74,15 +74,15 @@ class ExtractInvestment:
                 count = self._daily_count[day]
 
                 while count > 0:
+                    func = CountBisectFunc(qf, day, self._max_day)
                     try:
-                        func = CountBisectFunc(qf, day, self._max_day)
+                        value = fbisect.find_last_ge(func,
+                                                     count,
+                                                     self._min_inv,
+                                                     self._max_inv)
                     except AssertionError as e:
                         sys.stderr.write(f'bisection assertion error ({e}); retrying dat {day}\n')
                         break
-                    value = fbisect.find_last_ge(func,
-                                                 count,
-                                                 self._min_inv,
-                                                 self._max_inv)
                     if verbose > 1:
                         sys.stderr.write(f'{count} {func(value)} {func(value+1)}\n')
                     if count != func(value):
