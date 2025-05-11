@@ -74,7 +74,11 @@ class ExtractInvestment:
                 count = self._daily_count[day]
 
                 while count > 0:
-                    func = CountBisectFunc(qf, day, self._max_day)
+                    try:
+                        func = CountBisectFunc(qf, day, self._max_day)
+                    except AssertionError as e:
+                        sys.stderr.write(f'bisection assertion error ({e}); retrying dat {day}\n')
+                        break
                     value = fbisect.find_last_ge(func,
                                                  count,
                                                  self._min_inv,
@@ -83,6 +87,7 @@ class ExtractInvestment:
                         sys.stderr.write(f'{count} {func(value)} {func(value+1)}\n')
                     if count != func(value):
                         # this occurs if there's live new data
+                        sys.stderr.write(f'bisection count changed; retrying dat {day}\n')
                         sys.stderr.write(f'count ({count}) != func({value}) ({func(value)}): nearby: {func(value-1)} {func(value)} {func(value+1)}\n')
                         sys.stderr.write(f'qf({value},{day}) = {qf(value,day)}\n')
                         sys.stderr.write(f'qf({value+1},{day}) = {qf(value+1,day)}\n')
@@ -95,6 +100,7 @@ class ExtractInvestment:
                     if verbose > 1:
                         sys.stderr.write(f'new_count = {new_count}, func({value+1}) = {func(value+1)}\n')
                         if count_changed <= 0:
+                            sys.stderr.write(f'bisection count change negative; retrying dat {day}\n')
                             break
                     # investment totals at value and value+1 for today
                     investment_diff = (self._src(value, day)[0] - self._src(value+1, day)[0]) - (self._src(value, day+1)[0] - self._src(value+1,day+1)[0])

@@ -18,7 +18,7 @@ def find_first_ge(f: Callable[[int], int],
                   ythreshold: int,
                   x0: int,
                   x1: int) -> int:
-    assert(x0 <= x1)  # non-empty range
+    assert x0 <= x1  # non-empty range
     assert f(x1) >= ythreshold
     if f(x0) >= ythreshold:
         return x0
@@ -45,7 +45,7 @@ def find_last_le(f: Callable[[int], int],
                  ythreshold: int,
                  x0: int,
                  x1: int) -> int:
-    assert(x0 <= x1)  # non-empty range
+    assert x0 <= x1  # non-empty range
     assert f(x0) <= ythreshold
     if f(x1) <= ythreshold:
         return x1
@@ -75,7 +75,7 @@ def find_first_le(f: Callable[[int], int],
                   ythreshold: int,
                   x0: int,
                   x1: int) -> int:
-    assert(x0 <= x1)  # non-empty range
+    assert x0 <= x1  # non-empty range
     assert f(x1) <= ythreshold
     if f(x0) <= ythreshold:
         return x0
@@ -102,7 +102,7 @@ def find_last_ge(f: Callable[[int], int],
                  ythreshold: int,
                  x0: int,
                  x1: int) -> int:
-    assert(x0 <= x1)  # non-empty range
+    assert x0 <= x1  # non-empty range
     assert f(x0) >= ythreshold
     if f(x1) >= ythreshold:
         return x1
