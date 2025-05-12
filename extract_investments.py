@@ -34,11 +34,13 @@ class ExtractInvestment:
                  src: investment_data.InvestmentData,
                  max_day: int,
                  min_investment: int,
-                 max_investment: int) -> None:
+                 max_investment: int,
+                 max_day_error: int = 8) -> None:
         self._src = src
         self._max_day = max_day
         self._min_inv = min_investment
         self._max_inv = max_investment
+        self._max_day_error = max_day_error
 
         self._daily_data: list[Tuple[int, int]] = []
         self._daily_amt: list[int] = [ -1 ] * max_day
@@ -70,6 +72,7 @@ class ExtractInvestment:
         qf = self._src
         for day in range(self._max_day):
             day_column_done = False
+            day_error_count = 0
             while not day_column_done:
                 count = self._daily_count[day]
 
@@ -100,7 +103,7 @@ class ExtractInvestment:
                     if verbose > 1:
                         sys.stderr.write(f'new_count = {new_count}, func({value+1}) = {func(value+1)}\n')
                         if count_changed <= 0:
-                            sys.stderr.write(f'bisection count change negative; retrying dat {day}\n')
+                            sys.stderr.write(f'bisection count change negative; retrying day {day}\n')
                             break
                     # investment totals at value and value+1 for today
                     investment_diff = (self._src(value, day)[0] - self._src(value+1, day)[0]) - (self._src(value, day+1)[0] - self._src(value+1,day+1)[0])
@@ -126,6 +129,10 @@ class ExtractInvestment:
                 # investment
                 day_column_done = count == 0
                 if not day_column_done:
+                    day_error_count += 1
+                    if day_error_count >= self._max_day_error:
+                        sys.stderr.write(f'max day error exceeded, aborting\n')
+                        raise RuntimeError('Max day error exceeded')
                     sys.stderr.write('sanity check violation. likely new data incorporated.\n')
                     qf.flush_cache()
                     self.compute_daily_data()

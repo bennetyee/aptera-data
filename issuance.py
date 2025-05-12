@@ -100,7 +100,7 @@ class IssuanceInvestmentData(investment_data.InvestmentData):
 
     def flush_cache(self):
         if self._cache is not None:
-            self._cache.set_cache(dict())
+            self._cache.flush_cache()
 
     def cache(self) -> cache.FuncCache | None:
         return self._cache

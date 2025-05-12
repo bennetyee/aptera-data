@@ -41,3 +41,9 @@ class FuncCache:
 
     def set_cache(self, cache: Dict[Any, Any]) -> None:
         self._cache = cache
+
+    def flush_cache(self) -> None:
+        self._cache = {}
+        if self._progress != 0:
+            sys.stderr.write('!')
+            sys.stderr.flush()
