@@ -4,6 +4,7 @@ import sys
 from typing import Callable, Tuple
 
 import fbisect
+import find_jumps
 import investment_data
 
 verbose: int = 0
@@ -75,22 +76,24 @@ class ExtractInvestment:
             day_error_count = 0
             while not day_column_done:
                 count = self._daily_count[day]
+                func = CountBisectFunc(qf, day, self._max_day)
 
+                count_history = []
                 while count > 0:
-                    func = CountBisectFunc(qf, day, self._max_day)
+                    count_history.append(count)
                     try:
                         value = fbisect.find_last_ge(func,
                                                      count,
                                                      self._min_inv,
                                                      self._max_inv)
                     except AssertionError as e:
-                        sys.stderr.write(f'bisection assertion error ({e}); retrying dat {day}\n')
+                        sys.stderr.write(f'bisection assertion error ({e}); retrying day {day}\n')
                         break
                     if verbose > 1:
                         sys.stderr.write(f'{count} {func(value)} {func(value+1)}\n')
                     if count != func(value):
                         # this occurs if there's live new data
-                        sys.stderr.write(f'bisection count changed; retrying dat {day}\n')
+                        sys.stderr.write(f'bisection count changed, history {count_history}; retrying day {day}\n')
                         sys.stderr.write(f'count ({count}) != func({value}) ({func(value)}): nearby: {func(value-1)} {func(value)} {func(value+1)}\n')
                         sys.stderr.write(f'qf({value},{day}) = {qf(value,day)}\n')
                         sys.stderr.write(f'qf({value+1},{day}) = {qf(value+1,day)}\n')
@@ -103,7 +106,7 @@ class ExtractInvestment:
                     if verbose > 1:
                         sys.stderr.write(f'new_count = {new_count}, func({value+1}) = {func(value+1)}\n')
                         if count_changed <= 0:
-                            sys.stderr.write(f'bisection count change negative; retrying day {day}\n')
+                            sys.stderr.write(f'bisection count change ({count}-{new_count}={count_changed}) not positive, history {count_history}; retrying day {day}\n')
                             break
                     # investment totals at value and value+1 for today
                     investment_diff = (self._src(value, day)[0] - self._src(value+1, day)[0]) - (self._src(value, day+1)[0] - self._src(value+1,day+1)[0])
@@ -137,4 +140,43 @@ class ExtractInvestment:
                     qf.flush_cache()
                     self.compute_daily_data()
             # redo column?
+        return investments
+
+    def fast_extraction(self) -> list[Tuple[int, int]]:
+        investments: list[Tuple[int, int]] = []
+        qf = self._src
+        for day in range(self._max_day):
+            day_column_done = False
+            day_error_count = 0
+            while not day_column_done:
+                func = CountBisectFunc(qf, day, self._max_day)
+                day_list = []
+                try:
+                    day_investments = find_jumps.find_lasts(func, 0, self._max_inv)
+                except AssertionError as e:
+                    sys.stderr.write(f'bisection assertion error ({e}); retrying at day {day}\n')
+                    day_error_count += 1
+                    if day_error_count >= self._max_day_error:
+                        break
+                retry = False
+                for x in day_investments:
+                    count = func(x)
+                    new_count = func(x + 1)
+                    count_changed = count - new_count
+                    if count_changed <= 0:
+                        sys.stderr.write(f'count change not positive; retrying day {day}\n')
+                        retry = True
+                        break
+                    for _ in range(count_changed):
+                        day_list.append((day, x))
+                if not retry:
+                    day_column_done = True
+                else:
+                    day_error_count += 1
+                    if day_error_count >= self._max_day_error:
+                        break
+            if not day_column_done:
+                sys.stderr.write(f'max day error exceeded, aborting\n')
+                raise RuntimeError('Max day error exceeded')
+            investments += day_list
         return investments

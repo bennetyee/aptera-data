@@ -31,6 +31,9 @@ def main(argv: list[str]) -> int:
     parser.add_argument('--output-format', type=str, choices=['json', 'old', 'csv'],
                         default='old',
                         help='output style')
+    parser.add_argument('--fast-extraction', type=bool, default=False,
+                        action=argparse.BooleanOptionalAction,
+                        help='use new, faster investment extraction algorithm')
 
     options = parser.parse_args(argv[1:])
 
@@ -72,7 +75,10 @@ def main(argv: list[str]) -> int:
             today + 1,
             0, 10_000_000 * 100)
 
-        investments = extractor.extract_investments()
+        if options.fast_extraction:
+            investments = extractor.fast_extraction()
+        else:
+            investments = extractor.extract_investments()
         if options.output_format == 'old':
             sys.stdout.write(f'investments[\'{slug}\'] = {investments}\n')
         elif options.output_format == 'json' or options.output_format == 'csv':
