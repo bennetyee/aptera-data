@@ -30,6 +30,17 @@ class CountBisectFunc:
 
         return incr
 
+class CountSpecificBisectFunc:
+    def __init__(self,
+                 src: Callable[[int|None, int|None], Tuple[int, int]],
+                 day: int):
+        self._src = src
+        self._day = day
+
+    def __call__(self, threshold: int) -> int:
+        return self._src(threshold, self._day)[1]
+
+
 class ExtractInvestment:
     def __init__(self,
                  src: investment_data.InvestmentData,
