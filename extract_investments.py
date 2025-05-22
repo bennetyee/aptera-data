@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from abc import ABC, abstractmethod
 import sys
 from typing import Callable, Tuple
 
@@ -9,9 +10,17 @@ import investment_data
 
 verbose: int = 0
 
-class CountBisectFunc:
+class BisectFunc(ABC):
+    def __init__(self) -> None:
+        pass
+
+    @abstractmethod
+    def __call__(self, threshold: int) -> int:
+        pass
+
+class CumulativeCountBisectFunc(BisectFunc):
     def __init__(self,
-                 src: Callable[[int|None, int|None], Tuple[int, int]],
+                 src: Callable[[int|None, int], Tuple[int, int]],
                  day: int,
                  max_day: int):
         self._src = src
@@ -27,18 +36,18 @@ class CountBisectFunc:
             next_day_count = self._src(threshold, self._day + 1)[1]
 
         incr = today_count - next_day_count
-
         return incr
 
-class CountSpecificBisectFunc:
+class DailyCountBisectFunc(BisectFunc):
     def __init__(self,
-                 src: Callable[[int|None, int|None], Tuple[int, int]],
+                 src: Callable[[int|None, int], Tuple[int, int]],
                  day: int):
         self._src = src
         self._day = day
 
     def __call__(self, threshold: int) -> int:
-        return self._src(threshold, self._day)[1]
+        incr = self._src(threshold, self._day)[1]
+        return incr
 
 
 class ExtractInvestment:
@@ -47,12 +56,14 @@ class ExtractInvestment:
                  max_day: int,
                  min_investment: int,
                  max_investment: int,
-                 max_day_error: int = 8) -> None:
+                 max_day_error: int = 8,
+                 src_is_cumulative: bool = True) -> None:
         self._src = src
         self._max_day = max_day
         self._min_inv = min_investment
         self._max_inv = max_investment
         self._max_day_error = max_day_error
+        self._src_is_cumulative = src_is_cumulative
 
         self._daily_data: list[Tuple[int, int]] = []
         self._daily_amt: list[int] = [ -1 ] * max_day
@@ -62,13 +73,18 @@ class ExtractInvestment:
         for day in range(self._max_day):
             self._daily_data.append(self._src(None, day))
 
-        for day in range(0, self._max_day - 1):
-            self._daily_amt[day] = self._daily_data[day][0] - self._daily_data[day+1][0]
-        self._daily_amt[self._max_day - 1] = self._daily_data[self._max_day - 1][0]
+        if self._src_is_cumulative:
+            for day in range(0, self._max_day - 1):
+                self._daily_amt[day] = self._daily_data[day][0] - self._daily_data[day+1][0]
+            self._daily_amt[self._max_day - 1] = self._daily_data[self._max_day - 1][0]
 
-        for day in range(0, self._max_day - 1):
-            self._daily_count[day] = self._daily_data[day][1] - self._daily_data[day+1][1]
-        self._daily_count[self._max_day - 1] = self._daily_data[self._max_day - 1][1]
+            for day in range(0, self._max_day - 1):
+                self._daily_count[day] = self._daily_data[day][1] - self._daily_data[day+1][1]
+            self._daily_count[self._max_day - 1] = self._daily_data[self._max_day - 1][1]
+        else:
+            for day in range(0, self._max_day):
+                self._daily_amt[day] = self._daily_data[day][0]
+                self._daily_count[day] = self._daily_data[day][1]
 
     def extract_investments(self) -> list[Tuple[int, int]]:
         self.compute_daily_data()
@@ -87,7 +103,10 @@ class ExtractInvestment:
             day_error_count = 0
             while not day_column_done:
                 count = self._daily_count[day]
-                func = CountBisectFunc(qf, day, self._max_day)
+                if self._src_is_cumulative:
+                    func: BisectFunc = CumulativeCountBisectFunc(qf, day, self._max_day)
+                else:
+                    func = DailyCountBisectFunc(qf, day)
 
                 count_history = []
                 while count > 0:
@@ -120,7 +139,7 @@ class ExtractInvestment:
                             sys.stderr.write(f'bisection count change ({count}-{new_count}={count_changed}) not positive, history {count_history}; retrying day {day}\n')
                             break
                     # investment totals at value and value+1 for today
-                    investment_diff = (self._src(value, day)[0] - self._src(value+1, day)[0]) - (self._src(value, day+1)[0] - self._src(value+1,day+1)[0])
+                    investment_diff = (self._src(value, day)[0] - self._src(value+1, day)[0])
 
                     # Sometimes investment_diff is not evenly divisible by
                     # count_changed.  My guess is that this represents
@@ -160,7 +179,10 @@ class ExtractInvestment:
             day_column_done = False
             day_error_count = 0
             while not day_column_done:
-                func = CountBisectFunc(qf, day, self._max_day)
+                if self._src_is_cumulative:
+                    func: BisectFunc = CumulativeCountBisectFunc(qf, day, self._max_day)
+                else:
+                    func = DailyCountBisectFunc(qf, day)
                 day_list = []
                 try:
                     day_investments = find_jumps.find_lasts(func, 0, self._max_inv)

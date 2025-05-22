@@ -10,7 +10,7 @@ class InvestmentData(ABC):
         pass
 
     @abstractmethod
-    def __call__(self, threshold: int | None, date: int | None) -> Tuple[int, int]:
+    def __call__(self, threshold: int | None, date: int) -> Tuple[int, int]:
         pass
 
     @abstractmethod

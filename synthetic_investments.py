@@ -19,13 +19,12 @@ class SyntheticInvestmentData(investment_data.InvestmentData):
             for _ in range(num_entries)]
         self._num_queries = 0
 
-    def __call__(self, threshold: int | None, date: int | None) -> Tuple[int, int]:
+    def __call__(self, threshold: int | None, date: int) -> Tuple[int, int]:
         self._num_queries += 1
         d = self._investments
         if threshold is not None:
             d = [t for t in d if t[1] >= threshold]
-        if date is not None:
-            d = [t for t in d if t[0] >= date]
+        d = [t for t in d if t[0] >= date]
 
         dl = [t[1] for t in d]
         return (sum(dl), len(dl))

@@ -9,6 +9,7 @@ from typing import Any, Dict
 
 import cache
 import extract_investments
+import investment_data
 import issuance
 
 options: None | argparse.Namespace = None
@@ -29,11 +30,14 @@ def main(argv: list[str]) -> int:
     parser.add_argument('--show-cache-progress', type=int, default=0,
                         help='print indicator for every this many cache hits (.) and misses (,) (0 to disable)')
     parser.add_argument('--output-format', type=str, choices=['json', 'old', 'csv'],
-                        default='old',
+                        default='csv',
                         help='output style')
-    parser.add_argument('--fast-extraction', type=bool, default=False,
+    parser.add_argument('--fast-extraction', type=bool, default=True,
                         action=argparse.BooleanOptionalAction,
                         help='use new, faster investment extraction algorithm')
+    parser.add_argument('--use-day-query', type=bool, default=True,
+                        action=argparse.BooleanOptionalAction,
+                        help='use more specific (day-only) query')
 
     options = parser.parse_args(argv[1:])
 
@@ -51,7 +55,10 @@ def main(argv: list[str]) -> int:
     investments_json: Dict[str, Any] = dict()
 
     for slug in ['aptera-rega', 'aptera-regd']:
-        data_src = issuance.IssuanceInvestmentData(slug)
+        if options.use_day_query:
+            data_src: investment_data.InvestmentData = issuance.IssuanceInvestmentDataSpecific(slug)
+        else:
+            data_src = issuance.IssuanceInvestmentData(slug)
 
         qf = data_src
         if options.cache:
@@ -73,7 +80,9 @@ def main(argv: list[str]) -> int:
         extractor = extract_investments.ExtractInvestment(
             qf,
             today + 1,
-            0, 10_000_000 * 100)
+            0, 10_000_000 * 100,
+            src_is_cumulative = not options.use_day_query
+        )
 
         if options.fast_extraction:
             investments = extractor.fast_extraction()

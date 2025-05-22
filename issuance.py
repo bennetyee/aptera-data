@@ -63,20 +63,20 @@ class IssuanceInvestmentData(investment_data.InvestmentData):
         self._slug = slug
         self._cache: cache.FuncCache | None = None
 
-    def __call__(self, threshold: int | None, date: int | None) -> Tuple[int, int]:
+    def __call__(self, threshold: int | None, date: int) -> Tuple[int, int]:
         if self._cache is not None:
             return self._cache(threshold, date)
         return self.real_work(threshold, date)
 
-    def real_work(self, threshold: int | None, date: int | None) -> Tuple[int, int]:
+    def real_work(self, threshold: int | None, date: int) -> Tuple[int, int]:
         params: Dict[str, str] = dict()
 
         params['slug'] = self._slug
         if threshold is not None:
             params['shares_amount__gte'] = f'{threshold / 100.0:.2f}'
-        if date is not None:
-            date_str = (self._day_zero + date * self._one_day).isoformat()
-            params['processed_at__date__gte'] = date_str
+
+        date_str = (self._day_zero + date * self._one_day).isoformat()
+        params['processed_at__date__gte'] = date_str
 
         amount = 0
         count = 0
@@ -117,7 +117,8 @@ class IssuanceInvestmentData(investment_data.InvestmentData):
             raise RuntimeError('caching not enabled')
         self._cache.set_show_progress_period(p)
 
-# Use a day-specific query
+# Use a day-specific query.  Note that the semantics of date argument
+# in __call__ is different from the previous class.
 class IssuanceInvestmentDataSpecific(investment_data.InvestmentData):
     def __init__(self, slug: str):
         self._day_zero = datetime.date.fromisoformat(priority_program_start_date_iso)
@@ -125,7 +126,7 @@ class IssuanceInvestmentDataSpecific(investment_data.InvestmentData):
         self._slug = slug
         self._cache: cache.FuncCache | None = None
 
-    def __call__(self, threshold: int | None, date: int | None) -> Tuple[int, int]:
+    def __call__(self, threshold: int | None, date: int) -> Tuple[int, int]:
         if self._cache is not None:
             return self._cache(threshold, date)
         return self.real_work(threshold, date)
