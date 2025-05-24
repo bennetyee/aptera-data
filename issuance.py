@@ -62,6 +62,7 @@ class IssuanceInvestmentData(investment_data.InvestmentData):
         self._one_day = datetime.timedelta(days=1)
         self._slug = slug
         self._cache: cache.FuncCache | None = None
+        self._session = requests.Session()
 
     def __call__(self, threshold: int | None, date: int) -> Tuple[int, int]:
         if self._cache is not None:
@@ -83,7 +84,7 @@ class IssuanceInvestmentData(investment_data.InvestmentData):
         if verbose > 2:
             sys.stderr.write(f'params {params}\n')
 
-        data = requests.get(issuance_url, params=params)
+        data = self._session.get(issuance_url, params=params)
         if not data.ok:
             raise IOError
         jdata = json.loads(data.content)
@@ -125,6 +126,7 @@ class IssuanceInvestmentDataSpecific(investment_data.InvestmentData):
         self._one_day = datetime.timedelta(days=1)
         self._slug = slug
         self._cache: cache.FuncCache | None = None
+        self._session = requests.Session()
 
     def __call__(self, threshold: int | None, date: int) -> Tuple[int, int]:
         if self._cache is not None:
@@ -147,7 +149,7 @@ class IssuanceInvestmentDataSpecific(investment_data.InvestmentData):
         if verbose > 2:
             sys.stderr.write(f'params {params}\n')
 
-        data = requests.get(issuance_url, params=params)
+        data = self._session.get(issuance_url, params=params)
         if not data.ok:
             raise IOError
         jdata = json.loads(data.content)
