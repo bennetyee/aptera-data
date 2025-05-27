@@ -4,6 +4,7 @@ import sys
 
 import aptera_data
 import coupon_round
+import extract_coupon_investments
 import investment_trend
 import left_to_raise
 
@@ -11,6 +12,7 @@ if __name__ == '__main__':
     entries = [
         ('aptera_data', aptera_data),
         ('coupon_round', coupon_round),
+        ('extract_coupon_investments', extract_coupon_investments),
         ('investment_trend', investment_trend),
         ('left_to_raise', left_to_raise),
     ]
