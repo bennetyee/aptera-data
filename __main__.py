@@ -7,6 +7,7 @@ import coupon_round
 import extract_coupon_investments
 import investment_trend
 import left_to_raise
+import priority_delivery_sanitizer
 
 if __name__ == '__main__':
     entries = [
@@ -15,6 +16,7 @@ if __name__ == '__main__':
         ('extract_coupon_investments', extract_coupon_investments),
         ('investment_trend', investment_trend),
         ('left_to_raise', left_to_raise),
+        ('priority_delivery_sanitizer', priority_delivery_sanitizer),
     ]
     for (name, mod) in entries:
         if sys.argv[0].endswith(name):
