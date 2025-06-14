@@ -6,11 +6,11 @@ import json
 import requests
 import sys
 
-from typing import Any, Dict, Generator, Tuple
+from typing import Any, Dict, Generator, Optional, Tuple
 
 import issuance
 
-options: Any = None  # argparse.Namespace
+options: Optional[argparse.Namespace] = None
 
 priority_slots_available = 1_000
 

@@ -1,24 +1,44 @@
 #!/usr/bin/python3
+import argparse
 import csv
 import sys
+from typing import Optional
+
+options: Optional[argparse.Namespace] = None
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 3:
-        sys.stderr.write('Usage: compress-coupon-csv in-file out-file\n')
-        return 1
+    global options
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--verbose', '-v', action='count',
+                        default=0,
+                        help='increment the verbosity level by 1')
+    parser.add_argument('--dollar', '-d', type=bool, default=False,
+                        action=argparse.BooleanOptionalAction,
+                        help='input includes total dollar amount and average investment amount')
+    parser.add_argument('infile', type=str, help='input file')
+    parser.add_argument('outfile', type=str, help='output file')
+    options = parser.parse_args(argv[1:])
+
     last_value = -1
-    with open(argv[1], 'r', newline='') as infile:
-        rcsv = csv.reader(infile, delimiter=',', quotechar='"')
-        with open(argv[2], 'w', newline='') as outfile:
-            wcsv = csv.writer(outfile, delimiter=',', quotechar='"')
+    if options.dollar:
+        count_column = 2
+        expected_columns = 4
+    else:
+        count_column = 1
+        expected_columns = 2
+    with open(options.infile, 'r', newline='') as infile:
+        rcsv = csv.reader(infile, skipinitialspace=True)
+        with open(options.outfile, 'w', newline='') as outfile:
+            wcsv = csv.writer(outfile)
             linenum = 0
             for row in rcsv:
                 linenum += 1
-                print(repr(row))
-                if len(row) != 2:
+                if options.verbose:
+                    print(repr(row))
+                if len(row) != expected_columns:
                     sys.stderr.write(f'compress-coupon-csv: Malformed input on line {linenum}: {len(row)} entries\n')
                     return 1
-                count = int(row[1])
+                count = int(row[count_column])
                 if count != last_value:
                     wcsv.writerow(row)
                     last_value = count

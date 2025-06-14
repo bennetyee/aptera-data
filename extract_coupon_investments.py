@@ -5,14 +5,14 @@ import csv
 import json
 import os
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import cache
 import extract_investments
 import investment_data
 import issuance
 
-options: None | argparse.Namespace = None
+options: Optional[argparse.Namespace] = None
 
 def main(argv: list[str]) -> int:
     global options
