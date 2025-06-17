@@ -77,3 +77,10 @@ The make target <tt>extract_coupon_investments</tt> queries issuance
 and outputs all the individual investments made since the start of the
 priority delivery / coupon investment round.
 
+The program <tt><a
+href="priority_delivery_sanitizer.py">priority_delivery_sanitizer.py</a></tt>
+can be used to provide a fake JSON response that returns just the
+number of priority-delivery slots claimed.  This program will have to
+be modified to make its query with the Firebase ID / API key so it
+will have access to the real data, so that it can provide the
+controlled interface to just the slot numbers.
