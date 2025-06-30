@@ -56,7 +56,7 @@ def output_plot(fn: str, dailies: List[int]) -> None:
     ax2.set_ylabel('cumulative amount', color=color)
     ax2.get_yaxis().set_major_formatter(
         matplotlib.ticker.FuncFormatter(lambda x,p: format(int(x), ',')))
-    plt.title('Priority Delivery Investment')
+    plt.title('Coupon Round / Priority Delivery Investments')
     plt.tight_layout(pad = 1.5)
     plt.savefig(fn)
 
