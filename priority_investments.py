@@ -25,7 +25,7 @@ options: Optional[argparse.Namespace] = None
 REGA='aptera-rega'
 REGD='aptera-regd'
 
-BAR_COLOR = {'aptera-rega': 'tab:blue', 'aptera-regd': 'tab:green'}
+BAR_COLOR = {'aptera-rega': 'blue', 'aptera-regd': 'green'}
 
 class CSVDataError(Exception):
     def __init__(self, message='CSV data error'):
@@ -40,7 +40,7 @@ def read_investment_data(fn: str) -> List[Tuple[str, int, int]]:
         rcsv = csv.reader(infile, skipinitialspace=True)
         for row in rcsv:
             line += 1
-            if options.verbose:
+            if options.verbose > 1:
                 print(repr(row))
             if len(row) != 3:
                 raise CSVDataError(f'File {fn}, line {line}: format error: should be 3 fields, got: {','.join(row)}\n')
@@ -73,14 +73,14 @@ def output_investment_vs_time_plot(fn: str, dailies: List[int]) -> None:
     ys = np.array([d / 100.0 for d in dailies])
     # figsize in inches, default 100dp, so 1024x768
     _fig, ax = plt.subplots(figsize=(10.24, 7.68))
-    color = 'tab:blue'
+    color = 'blue'
     ax.plot(xs,ys, color=color)
     ax.set_xlabel('days since start of PD program')
     ax.set_ylabel('investments', color=color)
     ax.get_yaxis().set_major_formatter(
         matplotlib.ticker.FuncFormatter(lambda x,p: format(int(x), ',')))
     ax2 = ax.twinx()
-    color = 'tab:red'
+    color = 'red'
     y2 = [0] * len(ys)
     y2[0] = ys[0]
     for ix in range(1, len(ys)):
@@ -140,14 +140,14 @@ def output_investment_distribution_animation(fn: str, min_b: int, max_b: Optiona
             bucketset[d][selix][bucketix] += amt
         else:
             bucketset[d][selix][bucketix] += 1
-    if options.verbose > 1:
+    if options.verbose > 3:
         print(f'bucketset {bucketset}')
     if cumulative:
         for d in range(1, max_d+1):
             for s in range(len(selector)):
                 for b in range(num_buckets):
                     bucketset[d][s][b] += bucketset[d-1][s][b]
-        if options.verbose > 1:
+        if options.verbose > 3:
             print(f'cumulative bucketset {bucketset}')
     max_height = 0
     for d in range(max_d + 1):
@@ -161,7 +161,8 @@ def output_investment_distribution_animation(fn: str, min_b: int, max_b: Optiona
         for d in range(max_d + 1):
             fig, ax = plt.subplots(figsize=(20.48, 15.36))
             frame_fn = os.path.join(dir, f'frame_{d}.png')
-            print(f'frame_fn {frame_fn}')
+            if options.verbose:
+                print(f'frame_fn {frame_fn}')
             bottoms = np.zeros(num_buckets)
             for selix in range(len(selector)):
                 ys = np.array(bucketset[d][selix])
@@ -182,6 +183,7 @@ def output_investment_distribution_animation(fn: str, min_b: int, max_b: Optiona
             ax.set_ylim(0, ymax)
             ax.legend()
             ax.set_xlabel(f'Bucket 0 min value \\${min_b/100.0:.2f}, bucket width \\${width/100.0:.2f}')
+            ax.tick_params(axis='x', labelrotation=90)
             plt.savefig(frame_fn)
             plt.close(fig)
         # generate animation
