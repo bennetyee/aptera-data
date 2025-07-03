@@ -25,7 +25,7 @@ options: Optional[argparse.Namespace] = None
 REGA='aptera-rega'
 REGD='aptera-regd'
 
-BAR_COLOR = {'aptera-rega': 'blue', 'aptera-regd': 'green'}
+BAR_COLOR = {'aptera-rega': 'tab:orange', 'aptera-regd': 'tab:green'}
 
 class CSVDataError(Exception):
     def __init__(self, message='CSV data error'):
@@ -170,7 +170,7 @@ def output_investment_distribution_animation(fn: str, min_b: int, max_b: Optiona
                     ys = ys / 100.0
                 color = BAR_COLOR[selector[selix]]
                 p = ax.bar(xs, ys, width=bar_width, label=selector[selix],
-                           bottom=bottoms)
+                           bottom=bottoms, color=color)
                 bottoms += ys
                 ax.bar_label(p, label_type='center')
             ax.set_title(f'Aptera Coupon/PD Investments, day {d}')
