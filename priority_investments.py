@@ -73,14 +73,14 @@ def output_investment_vs_time_plot(fn: str, dailies: List[int]) -> None:
     ys = np.array([d / 100.0 for d in dailies])
     # figsize in inches, default 100dp, so 1024x768
     _fig, ax = plt.subplots(figsize=(10.24, 7.68))
-    color = 'blue'
+    color = 'tab:blue'
     ax.plot(xs,ys, color=color)
     ax.set_xlabel('days since start of PD program')
     ax.set_ylabel('investments', color=color)
     ax.get_yaxis().set_major_formatter(
         matplotlib.ticker.FuncFormatter(lambda x,p: format(int(x), ',')))
     ax2 = ax.twinx()
-    color = 'red'
+    color = 'tab:red'
     y2 = [0] * len(ys)
     y2[0] = ys[0]
     for ix in range(1, len(ys)):
@@ -188,10 +188,12 @@ def output_investment_distribution_animation(fn: str, min_b: int, max_b: Optiona
             plt.close(fig)
         # generate animation
         subprocess.run(['rm', '-f', fn])
-        subprocess.run(['ffmpeg', '-framerate', str(dps),
-                        '-i', os.path.join(dir, 'frame_%d.png'),
-                        '-start_number', '0', '-r', '30',
-                        fn])
+        p = subprocess.run(['ffmpeg', '-framerate', str(dps),
+                            '-i', os.path.join(dir, 'frame_%d.png'),
+                            '-start_number', '0', '-r', '30',
+                            fn],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        p.check_returncode()
 
 def main(argv: List[str]) -> int:
     global options
