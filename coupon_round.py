@@ -76,13 +76,13 @@ def main(argv: list[str]) -> int:
           lambda : f'{datetime.datetime.now().isoformat()}' ],
         [ options.dollar,
           'dollar total: ',
-          lambda: f'${sums[0]:,.2f}' ],
+          lambda: f'${sums[0]:,.2f}' if sums[0] != -1 else 'REDACTED' ],
         [ True,
           'slots: ',
           lambda: f'{slots:d}' ],
         [ options.average_investment,
           'average: ',
-          lambda: f'${sums[0]/sums[1]:,.2f}' ],
+          lambda: f'${sums[0]/sums[1]:,.2f}' if sums[0] != -1 else 'REDACTED' ],
     ]
 
     def comma_quote(v: str) -> str:

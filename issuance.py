@@ -46,12 +46,20 @@ def fetch_amount_and_count(url: str, params: Dict[str, str]) -> Tuple[float, flo
     if not data.ok:
         raise IOError
     jdata = json.loads(data.content)
-    return (jdata['total_amount_committed']['amount'], jdata['total_amount_committed']['count'])
+    if 'amount' in jdata['total_amount_committed']:
+        return (jdata['total_amount_committed']['amount'], jdata['total_amount_committed']['investor_count'])
+    else:
+        # data has been sanitized
+        return (-1, jdata['total_amount_committed']['investor_count'])
 
 def total_committed_amount_and_count(url: str, params: list[Dict[str, str]]) -> Tuple[float, int]:
     d = [fetch_amount_and_count(url, p) for p in params]
     amt, cnt = map(list, zip(*d))
-    return (sum(amt), sum(cnt))
+    def sum_invalid(lst):
+        if -1 in lst:
+            return -1
+        return sum(lst)
+    return (sum_invalid(amt), sum(cnt))
 
 def total_committed_amount_and_count_at_threshold(threshold: int | None):
     return total_committed_amount_and_count(issuance_url, make_params(threshold))
@@ -88,11 +96,17 @@ class IssuanceInvestmentData(investment_data.InvestmentData):
         if not data.ok:
             raise IOError
         jdata = json.loads(data.content)
-        a = jdata['total_amount_committed']['amount']
-        c = jdata['total_amount_committed']['count']
+        if 'amount' in jdata['total_committed_amount_and_count']:
+            a = jdata['total_amount_committed']['amount']
+        else:
+            a = -1
+        c = jdata['total_amount_committed']['investor_count']
         if verbose > 2:
             sys.stderr.write(f'slug = {self._slug}, a = {a:18f}, c = {c:18f}\n')
-        amount += int(100 * a + 0.5)
+        if a != -1 and amount != -1:
+            amount += int(100 * a + 0.5)
+        else:
+            amount = -1
         count += int(c)
         return (amount, count)
 
@@ -153,11 +167,17 @@ class IssuanceInvestmentDataSpecific(investment_data.InvestmentData):
         if not data.ok:
             raise IOError
         jdata = json.loads(data.content)
-        a = jdata['total_amount_committed']['amount']
-        c = jdata['total_amount_committed']['count']
+        if 'amount' in jdata['total_amount_committed']:
+            a = jdata['total_amount_committed']['amount']
+        else:
+            a = -1
+        c = jdata['total_amount_committed']['investor_count']
         if verbose > 2:
             sys.stderr.write(f'slug = {self._slug}, a = {a:18f}, c = {c:18f}\n')
-        amount += int(100 * a + 0.5)
+        if a != -1:
+            amount += int(100 * a + 0.5)
+        else:
+            amount = -1
         count += int(c)
         return (amount, count)
 
