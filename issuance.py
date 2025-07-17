@@ -22,6 +22,15 @@ issuance_params = {
 
 priority_slots_available = 1_000
 
+def get_count(d: Dict[str, str]) -> str:
+    for k in ['count', 'investor_count']:
+        if k in d:
+            if verbose:
+                sys.stderr.write(f'Using "{k}"\n')
+            return d[k]
+    sys.stderr.write(f'No count key found in {d}\n')
+    return '-1'
+
 def today_day_number():
     start_day = datetime.date.fromisoformat(priority_program_start_date_iso)
     today = datetime.date.today()
@@ -47,10 +56,10 @@ def fetch_amount_and_count(url: str, params: Dict[str, str]) -> Tuple[float, flo
         raise IOError
     jdata = json.loads(data.content)
     if 'amount' in jdata['total_amount_committed']:
-        return (jdata['total_amount_committed']['amount'], jdata['total_amount_committed']['investor_count'])
+        return (jdata['total_amount_committed']['amount'], get_count(jdata['total_amount_committed']))
     else:
         # data has been sanitized
-        return (-1, jdata['total_amount_committed']['investor_count'])
+        return (-1, get_count(jdata['total_amount_committed']))
 
 def total_committed_amount_and_count(url: str, params: list[Dict[str, str]]) -> Tuple[float, int]:
     d = [fetch_amount_and_count(url, p) for p in params]
@@ -100,7 +109,7 @@ class IssuanceInvestmentData(investment_data.InvestmentData):
             a = jdata['total_amount_committed']['amount']
         else:
             a = -1
-        c = jdata['total_amount_committed']['investor_count']
+        c = get_count(jdata['total_amount_committed'])
         if verbose > 2:
             sys.stderr.write(f'slug = {self._slug}, a = {a:18f}, c = {c:18f}\n')
         if a != -1 and amount != -1:
@@ -171,7 +180,7 @@ class IssuanceInvestmentDataSpecific(investment_data.InvestmentData):
             a = jdata['total_amount_committed']['amount']
         else:
             a = -1
-        c = jdata['total_amount_committed']['investor_count']
+        c = get_count(jdata['total_amount_committed'])
         if verbose > 2:
             sys.stderr.write(f'slug = {self._slug}, a = {a:18f}, c = {c:18f}\n')
         if a != -1:
